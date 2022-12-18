@@ -1,0 +1,3 @@
+[submodule "libs/jadeitite"]
+	path = libs/jadeitite
+	url = gitea@git.hussite-software.com:Derghust/jadeitite.git
