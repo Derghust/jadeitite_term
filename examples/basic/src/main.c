@@ -1,4 +1,5 @@
 #include "jadeitite.h"
+#include "jadeitite_term.h"
 #include "font8x8.h"
 
 void onAttach(int p_argc, char **p_argv);
@@ -8,7 +9,10 @@ void onKeyboardDown(unsigned char p_key, int p_x, int p_y);
 void onKeyboardUp(unsigned char p_key, int p_x, int p_y);
 void onResize(int p_width, int p_height);
 
-static jdt_winProp_t s_winProp = (jdt_winProp_t) {480, 320, "BASE TEMPLATE", 1};
+static jdt_winProp_t s_winProp = (jdt_winProp_t) {160, 160, "BASE TEMPLATE", 1};
+
+jdt_term_asset_t *l_asset;
+jdt_term_t *l_term;
 
 int jdt_setup(jdt_callbacks_t *p_callbacks, jdt_winProp_t *p_winProp, int p_argc, char *p_argv[]) {
   p_callbacks->onAttach = onAttach;
@@ -44,17 +48,28 @@ void onAttach(int p_argc, char **p_argv) {
   JDT_LOG_INFO("Test Data 1 [%d; %d]", read_data->num_a, read_data->num_b);
   free(read_data);
 
+  jdt_term_asset_create("font8x8.jta", 128, 8, font8x8_basic);
+
+  l_asset = jdt_term_asset_init("font8x8.jta", 128, 8);
+
+  l_term = jdt_term_init(s_winProp, (vec_2_u32){8, 8});
+  l_term->asset = l_asset;
+
+  l_term->color_draw = (jdt_term_cell_color_t){255, 0, 0};
+
+  l_term->buffer.data[0].color = (jdt_term_cell_color_t){255, 0, 0};
+  l_term->buffer.data[0].cell_id = 'a';
+
   onUpdate();
 }
 
 void onKeyboardDown(unsigned char p_key, int p_x, int p_y) {
   switch (p_key) {
-  case 'q': {
-    s_jdt_running = false;
+  default:{
+    JDT_LOG_DEBUG("Missing bind p_key on KeyboardDown for \"%c\"!", p_key);
+    jdt_term_put(l_term, p_key);
     break;
   }
-  default:JDT_LOG_DEBUG("Missing bind p_key on KeyboardDown for \"%c\"!", p_key);
-    break;
   }
 
   onUpdate(); // only if auto refresh is disabled
@@ -71,24 +86,36 @@ void onKeyboardUp(unsigned char p_key, int p_x, int p_y) {
 
 u32 s_text_pos_x = 0;
 bool s_text_pos_x_increasing = true;
+u32 l_random_index = 0;
 
 void onUpdate(void) {
-  if (s_text_pos_x >= 32) {
-    s_text_pos_x_increasing = false;
-  } else if (s_text_pos_x == 0) {
-    s_text_pos_x_increasing = true;
-  }
+//  if (s_text_pos_x >= 32) {
+//    s_text_pos_x_increasing = false;
+//  } else if (s_text_pos_x == 0) {
+//    s_text_pos_x_increasing = true;
+//  }
+//
+//  if (s_text_pos_x_increasing) {
+//    s_text_pos_x++;
+//  } else {
+//    s_text_pos_x--;
+//  }
 
-  if (s_text_pos_x_increasing) {
-    s_text_pos_x++;
-  } else {
-    s_text_pos_x--;
+  u8 l_rand = (u8)jdt_math_squirrel3(l_random_index, 123);
+  if (l_rand > 'z') {
+    l_rand = 'z';
+  } else if (l_rand < 33) {
+    l_rand = 33;
   }
+  l_random_index++;
+  jdt_term_put(l_term, l_rand);
 
   jdt_render_begin();
 
-  jdt_set_render_color(255, 0, 0);
-  jdt_draw_bitmaps(8, 8, font8x8_basic, 32 + s_text_pos_x, 32, "Hello, World!");
+//  jdt_set_render_color(255, 0, 0);
+//  jdt_draw_bitmaps(8, 8, l_asset->data, 32 + s_text_pos_x, 32, "Hello, World!");
+
+  jdt_term_render(l_term);
 
   // Render things here
 //  render_color(255, 0, 0);
@@ -101,6 +128,7 @@ void onUpdate(void) {
 
 void onDetach(int p_argc, char **p_argv) {
   JDT_LOG_INFO("Detaching...");
+  jdt_term_destroy(l_term);
 }
 
 void onResize(int p_width, int p_height) {
