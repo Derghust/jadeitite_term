@@ -1,4 +1,7 @@
+#define JDTT_GL_RESIZE 2
+
 #include "jadeitite.h"
+#include "jadeitite_gl.h"
 #include "jadeitite_term.h"
 #include "font8x8.h"
 
@@ -9,7 +12,7 @@ void onKeyboardDown(unsigned char p_key, int p_x, int p_y);
 void onKeyboardUp(unsigned char p_key, int p_x, int p_y);
 void onResize(int p_width, int p_height);
 
-static jdt_winProp_t s_winProp = (jdt_winProp_t) {160, 160, "BASE TEMPLATE", 1};
+static jdt_winProp_t s_winProp = (jdt_winProp_t) {160, 160, "BASE TEMPLATE", 1, 4};
 
 jdt_term_asset_t *l_asset;
 jdt_term_t *l_term;
@@ -22,18 +25,17 @@ int jdt_setup(jdt_callbacks_t *p_callbacks, jdt_winProp_t *p_winProp, int p_argc
   p_callbacks->onUpdate = onUpdate;
   p_callbacks->onResize = onResize;
 
-  p_winProp->width = s_winProp.width;
-  p_winProp->height = s_winProp.height;
+  p_winProp->width = s_winProp.width * s_winProp.renderMultiplier;
+  p_winProp->height = s_winProp.height * s_winProp.renderMultiplier;
   p_winProp->label = s_winProp.label;
   p_winProp->autoRefresh = s_winProp.autoRefresh;
 
-  return 1;
+  return JDT_RS_OK;
 }
 
 void onAttach(int p_argc, char **p_argv) {
-  s_jdt_clear_color_renderer.x = 32;
-  s_jdt_clear_color_renderer.y = 32;
-  s_jdt_clear_color_renderer.z = 32;
+  render_set_clear_color(0.1f, 0.1f, 0.1f);
+  render_set_projection_2DOrthographic(s_winProp.width, s_winProp.height);
 
   // Example for writing data
   typedef struct {
@@ -48,9 +50,9 @@ void onAttach(int p_argc, char **p_argv) {
   JDT_LOG_INFO("Test Data 1 [%d; %d]", read_data->num_a, read_data->num_b);
   free(read_data);
 
-  jdt_term_asset_create("font8x8.jta", 128, 8, font8x8_basic);
+  jdt_asset_create("font8x8.dat", 128, 8, font8x8_basic);
 
-  l_asset = jdt_term_asset_init("font8x8.jta", 128, 8);
+  l_asset = jdt_asset_read("font8x8.dat");
 
   l_term = jdt_term_init(s_winProp, (vec_2_u32){8, 8});
   l_term->asset = l_asset;
@@ -88,6 +90,19 @@ u32 s_text_pos_x = 0;
 bool s_text_pos_x_increasing = true;
 u32 l_random_index = 0;
 
+u8 generateRandomChar() {
+  u8 l_rand = (u8)jdt_math_squirrel3(l_random_index, 123);
+  if (l_rand > 'z') {
+    l_rand -= generateRandomChar();
+  } else if (l_rand < 33) {
+    l_rand = generateRandomChar();
+  } else {
+
+  }
+  return l_rand;
+  l_random_index++;
+}
+
 void onUpdate(void) {
 //  if (s_text_pos_x >= 32) {
 //    s_text_pos_x_increasing = false;
@@ -108,6 +123,18 @@ void onUpdate(void) {
     l_rand = 33;
   }
   l_random_index++;
+
+  u8 l_randColorR = (u8)jdt_math_squirrel3(l_random_index, 123);
+  l_random_index++;
+  u8 l_randColorG = (u8)jdt_math_squirrel3(l_random_index, 123);
+  l_random_index++;
+  u8 l_randColorB = (u8)jdt_math_squirrel3(l_random_index, 123);
+  l_random_index++;
+
+  jdt_term_set_color_draw(l_term, (jdt_term_cell_color_t){
+    .color_foreground.x = l_randColorR,
+    .color_foreground.y = l_randColorG,
+    .color_foreground.z = l_randColorB});
   jdt_term_put(l_term, l_rand);
 
   jdt_render_begin();
@@ -115,7 +142,7 @@ void onUpdate(void) {
 //  jdt_set_render_color(255, 0, 0);
 //  jdt_draw_bitmaps(8, 8, l_asset->data, 32 + s_text_pos_x, 32, "Hello, World!");
 
-  jdt_term_render(l_term);
+  jdt_term_render(l_term, s_winProp.renderMultiplier);
 
   // Render things here
 //  render_color(255, 0, 0);
@@ -132,8 +159,17 @@ void onDetach(int p_argc, char **p_argv) {
 }
 
 void onResize(int p_width, int p_height) {
-//  if (p_width > 0 && p_height > 0) {
-//    JDT_LOG_INFO("Resizing display [width=%d;height=%d]", p_width, p_height);
-//    window_resize(p_width, p_height);
-//  }
+  if (p_width > 0 && p_height > 0) {
+    JDT_LOG_INFO("Resizing display [width=%d;height=%d]", p_width, p_height);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(
+      0,
+      p_width,
+      p_height,
+      0
+    );
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+  }
 }

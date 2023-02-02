@@ -29,10 +29,6 @@ typedef struct {
 } jdt_term_buffer_t;
 
 typedef struct {
-  u8 data[256][8];
-} jdt_term_asset_t;
-
-typedef struct {
   jdt_term_buffer_t buffer;
   jdt_term_cell_color_t color_draw;
   jdt_term_cell_color_t color_clear;
@@ -92,7 +88,7 @@ static void jdt_term_clean(jdt_term_t *p_term) {
         p_term->color_clear.color_background.y,
         p_term->color_clear.color_background.z
         );
-      jdt_draw_rectangle_filled(x, y, 8, 8);
+      jdt_draw_rectangle_filled_int(x, y, 8, 8);
     }
   }
 
@@ -161,34 +157,20 @@ static void jdt_term_destroy(jdt_term_t *p_term) {
     free(p_term);
 }
 
-static jdt_term_asset_t *jdt_term_asset_init(char *p_path, size_t p_size, size_t p_height) {
-  return jdt_file_read(p_path, sizeof(jdt_term_asset_t));
-}
-
-static u8 jdt_term_asset_create(char *p_path, size_t p_size, size_t p_height, const u8 p_bitmap[p_size][p_height]) {
-  jdt_term_asset_t l_asset;
-  for (int x = 0; x < p_size; ++x) {
-    for (int y = 0; y < p_height; ++y) {
-      l_asset.data[x][y] = p_bitmap[x][y];
-    }
-  }
-  jdt_file_write(p_path, &l_asset, sizeof(jdt_term_asset_t));
-}
-
 // =====================================================================================================================
 //                                            Terminal renderer
 // =====================================================================================================================
 // Terminal renderer
 // ---------------------------------------------------------------------------------------------------------------------
 
-static void jdt_term_render(jdt_term_t *p_term) {
+static void jdt_term_render(jdt_term_t *p_term, u32 p_renderMultiplier) {
   for (int y = 0; y < p_term->properties.size.y; ++y) {
     for (int x = 0; x < p_term->properties.size.x; ++x) {
       const size_t l_pos = x + (y * p_term->properties.size.x);
       const jdt_term_cell_t l_cell = p_term->buffer.data[l_pos];
       const jdt_term_cell_color_t l_color = l_cell.color;
       jdt_set_render_color(l_color.color_foreground.x, l_color.color_foreground.y, l_color.color_foreground.z);
-      jdt_draw_bitmap(8, 8, p_term->asset->data[l_cell.cell_id], x * 8, y * 8);
+      jdt_draw_bitmap(8, 8, p_term->asset->data[l_cell.cell_id], x * 8, y * 8, p_renderMultiplier);
     }
   }
 }
