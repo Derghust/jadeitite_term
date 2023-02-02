@@ -67,6 +67,11 @@ void onAttach(int p_argc, char **p_argv) {
 
 void onKeyboardDown(unsigned char p_key, int p_x, int p_y) {
   switch (p_key) {
+  case 'c': {
+    jdt_term_clean(l_term);
+    jdt_term_set_cursor(l_term, (vec_2_u32){.x = 0, .y = 0});
+    break;
+  }
   default:{
     JDT_LOG_DEBUG("Missing bind p_key on KeyboardDown for \"%c\"!", p_key);
     jdt_term_put(l_term, p_key);
