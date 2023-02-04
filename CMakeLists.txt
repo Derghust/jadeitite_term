@@ -35,7 +35,6 @@ endif ()
 # Libraries
 
 add_subdirectory(libs/jadeitite)
-include_directories(../plan9port/src)
 
 ## Static
 

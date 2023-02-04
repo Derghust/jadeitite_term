@@ -78,8 +78,6 @@ void onKeyboardDown(unsigned char p_key, int p_x, int p_y) {
     break;
   }
   }
-
-  onUpdate(); // only if auto refresh is disabled
 }
 
 void onKeyboardUp(unsigned char p_key, int p_x, int p_y) {
@@ -87,46 +85,14 @@ void onKeyboardUp(unsigned char p_key, int p_x, int p_y) {
   default:JDT_LOG_DEBUG("Missing bind p_key on KeyboardUp for \"%c\"!", p_key);
     break;
   }
-
-//  onUpdate(); // only if auto refresh is disabled
 }
 
 u32 s_text_pos_x = 0;
 bool s_text_pos_x_increasing = true;
 u32 l_random_index = 0;
 
-u8 generateRandomChar() {
-  u8 l_rand = (u8)jdt_math_squirrel3(l_random_index, 123);
-  if (l_rand > 'z') {
-    l_rand -= generateRandomChar();
-  } else if (l_rand < 33) {
-    l_rand = generateRandomChar();
-  } else {
-
-  }
-  return l_rand;
-  l_random_index++;
-}
-
 void onUpdate(void) {
-//  if (s_text_pos_x >= 32) {
-//    s_text_pos_x_increasing = false;
-//  } else if (s_text_pos_x == 0) {
-//    s_text_pos_x_increasing = true;
-//  }
-//
-//  if (s_text_pos_x_increasing) {
-//    s_text_pos_x++;
-//  } else {
-//    s_text_pos_x--;
-//  }
-
-  u8 l_rand = (u8)jdt_math_squirrel3(l_random_index, 123);
-  if (l_rand > 'z') {
-    l_rand = 'z';
-  } else if (l_rand < 33) {
-    l_rand = 33;
-  }
+  u8 l_rand = (u8)jdt_math_squirrel3_range(l_random_index, 123, 'A', 'Z');
   l_random_index++;
 
   u8 l_randColorR = (u8)jdt_math_squirrel3(l_random_index, 123);
@@ -143,18 +109,7 @@ void onUpdate(void) {
   jdt_term_put(l_term, l_rand);
 
   jdt_render_begin();
-
-//  jdt_set_render_color(255, 0, 0);
-//  jdt_draw_bitmaps(8, 8, l_asset->data, 32 + s_text_pos_x, 32, "Hello, World!");
-
   jdt_term_render(l_term, s_winProp.renderMultiplier);
-
-  // Render things here
-//  render_color(255, 0, 0);
-//  draw_point_fast_l1_int(5, 5);
-//  draw_circle_filled_int(25, 25, 8, 8);
-//  draw_circle_int(50, 50, 16, 32);
-
   jdt_render_end();
 }
 
